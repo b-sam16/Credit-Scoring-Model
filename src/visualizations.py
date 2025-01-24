@@ -71,6 +71,7 @@ class DataVisualizer:
             return
 
         correlation_matrix = self.data[self.numerical_cols].corr()
+        print("Correlation Matrix:\n", correlation_matrix)  # Print the correlation matrix
         plt.figure(figsize=(6, 4))
         sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f")
         plt.title("Correlation Matrix")
