@@ -65,44 +65,27 @@ class DataCleaner:
         print("Missing values handled successfully!")
 
     
-    def detect_outliers(self, column, threshold=1.5):
+    def handle_outliers(self, threshold=1.5, method='cap'):
         """
-        Detects outliers using the Interquartile Range (IQR) method.
-        Returns a mask of outliers in the column.
-        """
-        Q1 = self.data[column].quantile(0.25)
-        Q3 = self.data[column].quantile(0.75)
-        IQR = Q3 - Q1
-        lower_bound = Q1 - threshold * IQR
-        upper_bound = Q3 + threshold * IQR
-        
-        outliers = (self.data[column] < lower_bound) | (self.data[column] > upper_bound)
-        return outliers
-    
-    def handle_outliers(self, column, method='cap', lower_cap=None, upper_cap=None):
-        """
-        Handle outliers in a column.
-        Methods: 'cap' (capping), 'remove' (removing outliers)
+        Detects and handles outliers for all numerical columns using the Interquartile Range (IQR) method.
+        The 'cap' method caps the outliers within the lower and upper bounds.
         
         Parameters:
-        method: str - The method to use for handling outliers ('cap' or 'remove')
-        lower_cap: float - Lower threshold for capping
-        upper_cap: float - Upper threshold for capping
+        method: str - The method to use for handling outliers ('cap')
+        threshold: float - The IQR threshold to detect outliers
         """
-        if method == 'remove':
-            # Remove outliers by filtering them out
-            outliers = self.detect_outliers(column)
-            self.data = self.data[~outliers]
-            print(f"Removed {outliers.sum()} outliers from {column}")
-        
-        elif method == 'cap':
-            # Cap the values outside the range to the threshold (if thresholds are provided)
-            if lower_cap is not None:
-                self.data[column] = np.where(self.data[column] < lower_cap, lower_cap, self.data[column])
-            if upper_cap is not None:
-                self.data[column] = np.where(self.data[column] > upper_cap, upper_cap, self.data[column])
-            print(f"Capped outliers in {column} to specified thresholds.")
-        else:
-            print("Invalid method specified. Use 'cap' or 'remove'.")
-
-
+        # Loop through all numerical columns
+        for col in self.data.select_dtypes(include=np.number).columns:
+            # Calculate IQR
+            Q1 = self.data[col].quantile(0.25)
+            Q3 = self.data[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - threshold * IQR
+            upper_bound = Q3 + threshold * IQR
+            
+            if method == 'cap':
+                # Cap outliers to the lower and upper bounds using the `clip` method
+                self.data[col] = self.data[col].clip(lower=lower_bound, upper=upper_bound)
+                print(f"Capped outliers in {col} to the lower and upper bounds.")
+            else:
+                print(f"Invalid method specified. Use 'cap'.")
