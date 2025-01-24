@@ -14,7 +14,7 @@ class DataCleaner:
         """
         Converts a column to datetime format if it is an object column with date/time values.
         """
-        if self.data['TransactionStartTime'].dtype == 'object':
+        if self.data[column].dtype == 'object':
             self.data[column] = pd.to_datetime(self.data[column], errors='coerce')
             print(f"Column {column} converted to datetime format.")
         else:
