@@ -34,22 +34,34 @@ class DataVisualizer:
             plt.ylabel("Frequency")
             plt.show()
 
-    def plot_categorical_distribution(self):
+    def plot_categorical_distribution(self,max_unique_values=25):
         """
-        Plot the distribution of categorical columns using bar plots.
+        Plot bar charts for all categorical columns in the dataset,
+        excluding those with one unique value or high cardinality (too many unique values).
         """
-        if not self.categorical_cols:
-            print("No categorical columns to visualize.")
-            return
-
-        for col in self.categorical_cols:
-            plt.figure(figsize=(8, 4))
-            self.data[col].value_counts().plot(kind='bar', color='skyblue')
-            plt.title(f"Distribution of {col}")
+        # Select categorical columns
+        categorical_cols = self.data.select_dtypes(include=['object', 'category']).columns
+    
+        for col in categorical_cols:
+            # Skip columns with only one unique value
+            if self.data[col].nunique() == 1:
+                print(f"Skipping {col} - Only one unique value")
+                continue
+        
+            # Skip columns with more than max_unique_values unique values
+            if self.data[col].nunique() > max_unique_values:
+                print(f"Skipping {col} - Too many unique values ({self.data[col].nunique()})")
+                continue  
+        
+        
+            plt.figure(figsize=(10, 6))
+            value_counts = self.data[col].value_counts().head(10)  # Show top 10 categories
+            sns.barplot(x=value_counts.index, y=value_counts.values, color='skyblue')
+            plt.title(f'Distribution of {col}')
             plt.xlabel(col)
-            plt.ylabel("Frequency")
+            plt.ylabel('Count')
             plt.show()
-
+            
     def plot_correlation_matrix(self):
         """
         Plot the correlation matrix of numerical columns.
