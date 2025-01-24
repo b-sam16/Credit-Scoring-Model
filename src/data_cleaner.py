@@ -10,6 +10,26 @@ class DataCleaner:
         """
         self.data = data
 
+    def convert_column_to_datetime(self, column):
+        """
+        Converts a column to datetime format if it is an object column with date/time values.
+        """
+        if self.data['TransactionStartTime'].dtype == 'object':
+            self.data[column] = pd.to_datetime(self.data[column], errors='coerce')
+            print(f"Column {column} converted to datetime format.")
+        else:
+            print(f"Column {column} is already in datetime format.")
+
+    def ensure_absolute_value(self):
+        """
+        Ensure the 'Value' column is the absolute value of the 'Amount' column.
+        """
+        if 'Amount' in self.data.columns and 'Value' in self.data.columns:
+            self.data['Value'] = self.data['Amount'].abs()
+            print("Ensured 'Value' column is the absolute value of 'Amount'.")
+        else:
+            print("Columns 'Amount' or 'Value' are missing from the dataset.")
+
     def handle_missing_values(self, strategy='mean', fill_value=None):
         """
         Handle missing values in the dataset.
