@@ -106,7 +106,7 @@ class FeatureEngineering:
         print(f"Missing values imputed for columns: {missing_columns}")
         return self.data
     
-    def normalize_standardize(self, columns, method='standardize'):
+    def normalize_standardize(self, columns, method='standardize', return_full_df=True):
         """
         Normalize or standardize numerical features.
         
@@ -119,8 +119,22 @@ class FeatureEngineering:
         """
         if method == 'normalize':
             scaler = MinMaxScaler()
-            self.data[columns] = scaler.fit_transform(self.data[columns])
+            suffix = '_normalized'
         elif method == 'standardize':
             scaler = StandardScaler()
-            self.data[columns] = scaler.fit_transform(self.data[columns])
-        return self.data
+            suffix = '_standardized'
+        else:
+            raise ValueError("Invalid method. Please choose 'normalize' or 'standardize'.")
+        
+        #Applyscaling and rename columns
+        scaled_data = scaler.fit_transform(self.data[columns])
+        scaled_columns = [col + suffix for col in columns]
+
+        # Add the scaled columns to the DataFrame
+        scaled_df = pd.DataFrame(scaled_data, columns=scaled_columns, index=self.data.index)
+        self.data = pd.concat([self.data, scaled_df], axis=1)
+    
+        if return_full_df:
+            return self.data
+        else:
+            return scaled_df
