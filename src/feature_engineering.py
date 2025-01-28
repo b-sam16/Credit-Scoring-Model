@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
 
 class FeatureEngineering:
     def __init__(self, data):
@@ -32,7 +35,10 @@ class FeatureEngineering:
             transaction_count='count',
             std_transaction_amount='std'
         ).reset_index()
-        return aggregated_data
+        # Merge the aggregated features back into the original dataset
+        self.data = self.data.merge(aggregated_data, on=customer_column, how='left')
+
+        return self.data
     
     def extract_features(self, date_column):
         """
@@ -138,3 +144,4 @@ class FeatureEngineering:
             return self.data
         else:
             return scaled_df
+        
