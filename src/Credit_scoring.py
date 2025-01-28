@@ -84,29 +84,32 @@ class CreditScoring:
 
     def perform_woe_binning(self, feature_cols, target_col):
         """
-        Perform WoE binning on specified features using scorecardpy.
-        
+        Perform Weight of Evidence (WoE) binning on the specified features.
+
         Parameters:
-        feature_cols : list - List of feature columns to perform WoE binning
-        target_col : str - The target column for WoE calculation
-        
-        Returns:
-        DataFrame with WoE-transformed features
+        feature_cols : list - List of feature column names for WoE binning.
+        target_col : str - Target column name for binning.
         """
-        # Using scorecardpy for binning and WoE calculation
-        # Create a credit model object
-        train_data = self.data[[target_col] + feature_cols]
-        sc_model = sc.Scorecard(train_data, target=target_col)
+        try:
+
+            # Map the target column to numeric values (1 for Good, 0 for Bad)
+            self.data[target_col] = self.data[target_col].map({'Good': 1, 'Bad': 0})
         
-        # Binning the features
-        for col in feature_cols:
-            sc_model.woe_bin(col)
-        
-        # Store WoE values in the dataframe
-        for col in feature_cols:
-            self.data[col + '_WoE'] = sc_model.data[col + '_woe']
-        
-        return self.data
+            # Ensure no missing values after mapping
+            if self.data[target_col].isnull().any():
+                raise ValueError("Target column contains invalid values that cannot be mapped.")
+
+            # WoE binning using scorecardpy's woebin function
+            binning = sc.woebin(self.data, y=target_col, x=feature_cols)
+
+            # Transform the dataset to include WoE-transformed values
+            self.data = sc.woebin_ply(self.data, binning)
+
+            print("WoE binning completed successfully.")
+            return binning  # Return binning details for inspection, if needed
+        except Exception as e:
+            print(f"An error occurred during WoE binning: {e}")
+
 
     def discretize_continuous_features(self, cols_to_bin, bins=5):
         """
@@ -214,10 +217,28 @@ class CreditScoring:
         feature_cols : list - List of feature columns to plot WoE binning
         """
         for feature in feature_cols:
-            plt.figure(figsize=(10, 6))
-            sns.barplot(x=self.data[feature + '_WoE'], y=self.data[feature], palette='coolwarm')
-            plt.title(f'Weight of Evidence (WoE) for {feature}')
-            plt.xlabel('WoE')
-            plt.ylabel(feature)
-            plt.show()
+            woe_feature = feature + '_woe'  # Adjusting to match the column names with '_woe'
+        
+            # Ensure the column exists before attempting to plot
+            if woe_feature in self.data.columns:
+                plt.figure(figsize=(10, 6))
+                sns.barplot(x=self.data[woe_feature], y=self.data[woe_feature], palette='coolwarm')
+                plt.title(f'Weight of Evidence (WoE) for {feature}')
+                plt.xlabel('WoE')
+                plt.ylabel(feature)
+                plt.show()
+            else:
+                print(f"Column {woe_feature} not found in the DataFrame.")
 
+    def save_to_csv(self, file_path):
+        """
+        Save the processed DataFrame to a CSV file.
+    
+        Parameters:
+        file_path : str - The path to the file where the DataFrame will be saved.
+    """
+        try:
+            self.data.to_csv(file_path, index=False)
+            print(f"Data saved successfully to {file_path}")
+        except Exception as e:
+            print(f"An error occurred while saving the data: {e}")
