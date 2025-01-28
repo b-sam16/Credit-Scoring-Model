@@ -103,7 +103,14 @@ class CreditScoring:
             binning = sc.woebin(self.data, y=target_col, x=feature_cols)
 
             # Transform the dataset to include WoE-transformed values
-            self.data = sc.woebin_ply(self.data, binning)
+            transformed_data = sc.woebin_ply(self.data, binning)
+
+            # Keep original columns and append WoE-transformed columns
+            for feature in feature_cols:
+                transformed_data.rename(columns={feature: f'{feature}_woe'}, inplace=True)
+
+            # Concatenate the original data with the transformed data
+            self.data = pd.concat([self.data, transformed_data[[f'{feature}_woe' for feature in feature_cols]]], axis=1)
 
             print("WoE binning completed successfully.")
             return binning  # Return binning details for inspection, if needed
